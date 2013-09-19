@@ -11,3 +11,15 @@
 *.lai
 *.la
 *.a
+
+*.opensdf
+*.sdf
+*.txt
+
+#Unused directories
+/Debug
+/Release
+/ipch
+/recov
+/resourcesTestExamples
+/workflowsTestExamples
