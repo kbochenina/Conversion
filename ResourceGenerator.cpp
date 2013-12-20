@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 #include <direct.h>
-
+#include <math.h>
 #include <time.h>
 using namespace std;
 
@@ -87,7 +87,43 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		addErrorData = ", line 14";
 		iss >> T;
 		if (iss.fail()) throw issFail + addErrorData;
-		
+
+		iss.clear();
+		getline(f,s);
+		getline(f,s);
+		iss.str(s);
+		addErrorData = ", line 16";
+		iss >> bmin;
+		if (iss.fail()) throw issFail + addErrorData;
+
+		iss.clear();
+		getline(f,s);
+		getline(f,s);
+		iss.str(s);
+		addErrorData = ", line 18";
+		iss >> bmax;
+		if (iss.fail()) throw issFail + addErrorData;
+
+		iss.clear();
+		getline(f,s);
+		getline(f,s);
+		iss.str(s);
+		addErrorData = ", line 20";
+		while (!iss.eof()){
+			double x;
+			iss >> x;
+			if (iss.fail()) throw issFail + addErrorData;
+			balance.push_back(x);
+		}
+		if (iss.fail()) throw issFail + addErrorData;
+
+		iss.clear();
+		getline(f,s);
+		getline(f,s);
+		iss.str(s);
+		addErrorData = ", line 22";
+		iss >> bcount;
+		if (iss.fail()) throw issFail + addErrorData;
 	}
 	catch (const string msg){
 		cout << msg << endl;
@@ -181,6 +217,115 @@ void ResourceGenerator::GenerateTestExamples(){
 		exit(EXIT_FAILURE);
 	}
 
+}
+
+
+double fRand(double fMin, double fMax)
+{
+    double f = (double)rand() / RAND_MAX;
+    return fMin + f * (fMax - fMin);
+}
+
+
+void ResourceGenerator::GenerateBandwidthFiles(){
+	string folderName = "bandwidthTestExamples";
+	string mdErr = "Unable to create directory " + folderName;
+	string errCreate = "Error while creating file";
+	try {
+		if (dirExist(folderName)) {
+			chdir(folderName.c_str());
+			system("del /q *");
+			chdir("..");
+			_rmdir(folderName.c_str());
+		}
+		if( _mkdir( folderName.c_str() ) == 0 )
+		{
+			printf( "Directory %s was successfully created\n", folderName.c_str() );
+			chdir(folderName.c_str());
+		}
+	    else
+		  throw mdErr;
+		
+		string filename;
+		
+		for (size_t i = 0; i < typesCount.size(); i++){
+			int typeCount = typesCount[i];
+			filename = "b" + to_string((long long)typeCount) + "_";
+			for (size_t j = 0; j < balance.size(); j++){
+				string secondname = filename + to_string(static_cast<long double>(static_cast<int>(balance[j]*1000)/1000.0)) + "_";;
+				for (int k = 0; k < bcount; k++){
+					string realname = secondname + to_string((long long)k+1);
+					realname += ".txt";
+					ofstream f(realname);
+					
+					double b = balance[j];
+					f << "Types count: " << typeCount << endl;
+					f << "Min bandwidth: " << bmin << endl;
+					f << "Max bandwidth: " << bmax << endl;
+					f << "Koeff value: " << b << endl;
+					
+					if (typeCount == 1){
+						f << 0;
+						f.close();
+						continue;
+					}
+
+					vector <vector<double>> res;
+					res.resize(typeCount);
+					for (int i = 0; i < typeCount; i++) res[i].resize(typeCount);
+
+					if (b == 1){
+						double val = fRand(bmin, bmax);
+						for (int i = 0; i < typeCount; i++)
+							for (int j = 0; j < typeCount; j++){
+								if (i == j) res[i][j] = 0.0;
+								else res[i][j] = val;
+							}
+
+					}
+					else {
+						for (int i = 0; i < typeCount; i++){
+							for (int j = 0; j < typeCount; j++){
+								if (i > j) continue;
+								if (i == j) res[i][j] = 0;
+								if (i < j) {
+									if (b == 0) res[i][j] = res[j][i] = fRand(bmin, bmax);
+									// if b is between 0 and 1
+									else {
+										double first = fRand(bmin, bmax);
+										double length = (1 - b)*(bmax - bmin);
+										double second = (first + length) < bmax? first + length : bmin + (first + length - bmax);										if (first < second) res[i][j] = res[j][i] = fRand(first, second);
+										else {
+											double rand1 = fRand(bmin, second),
+												rand2 = fRand(first, bmax);
+											int choice = rand()%2;
+											if (choice) res[i][j] = res[j][i] = rand1;
+											else res[i][j] = res[j][i] = rand2;
+										}
+									}
+								}
+							}
+						}
+					}
+					
+
+					f << "Matrix of connection speed: " << endl;
+					// write to file
+					for (int i = 0; i < typeCount; i++){
+							for (int j = 0; j < typeCount; j++)
+								f << res[i][j] << " ";
+							f << endl;
+						}
+					f.close();
+				}
+			}
+		}
+	}
+	catch (const string msg){
+		cout << msg << endl;
+		system("pause");
+		exit(EXIT_FAILURE);
+	}
 }
 
 

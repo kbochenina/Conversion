@@ -20,9 +20,18 @@ class ResourceGenerator
 	int testCount;
 	// second count
 	int T;
+	// min bandwidth
+	double bmin;
+	// max bandwidth
+	double bmax;
+	// vector of balance koefficient values
+	std::vector <double> balance;
+	// bandwidth file count
+	int bcount;
 public:
 	ResourceGenerator(char * fileName);
 	void GenerateTestExamples();
+	void GenerateBandwidthFiles();
 	~ResourceGenerator(void);
 };
 
