@@ -47,12 +47,28 @@ int main(int argc, char* argv[])
 		}
 		else chdir(folderName.c_str());
 		
-		vector <int> realNodeNumbers; // for each COMPUTATIONAL node - its number (with TRANSFER nodes)
+		vector <int> realNodeNumbers; // for each COMPUTATIONAL node - its number (with TRANSFER nodes) - from 1
+		// filling realNodeNumbers vector
+		string str;
+		int compNodeIndex = 1;
+		while (str.find("COMPUTATION")==-1) {
+			getline(daggen, str);
+		}
+		realNodeNumbers.push_back(compNodeIndex);
+		while (str.find("END")==-1){
+			getline(daggen, str);
+			compNodeIndex++;
+			if (str.find("COMPUTATION")!=-1)
+				realNodeNumbers.push_back(compNodeIndex);
+		}
+
+		daggen.seekg(0);
+
 		// also with TRANSFER NODES
 		vector <vector<int>> fullRelatedNumbers; // package1: (realNumber1, realNumber2), package2: (realNumber1, realNumber2), ...
 		int maxRealNodeNum = 0;
 		daggen.clear();
-		string str, trim;
+		string trim;
 		
 		// matrix of dependencies between packages
 		vector<vector<int>> connectivityMatrix;
@@ -112,9 +128,10 @@ int main(int argc, char* argv[])
 			int nodeNum; string nodeType;
 			iss >> nodeNum;
 						
-			realNodeNumbers.push_back(nodeNum);
+			//realNodeNumbers.push_back(nodeNum);
 
 			vector <int> relatedNumbers;
+			vector <pair<int, double>> transfer; // (2, 430.0), (4, 410.0) - (packageRecievet, dataAmount(Mb))
 			int currentRelatedNum; char space;
 			do{
 				iss >> currentRelatedNum;
@@ -140,6 +157,13 @@ int main(int argc, char* argv[])
 					iss >> nodeNum;
 					int relNum;
 					iss >> relNum;
+					vector<int>::iterator it = find(realNodeNumbers.begin(), realNodeNumbers.end(), relNum);
+					int reciever = distance(realNodeNumbers.begin(), it) + 1;
+					string add;
+					iss >> add;
+					double amount;
+					iss >> amount;
+					transfer.push_back(make_pair(reciever, amount));
 					if (find(relatedNumbers.begin(), relatedNumbers.end(), nodeNum)!=relatedNumbers.end()){
 						relatedCount--;
 						realRelated.push_back(relNum);
@@ -152,8 +176,13 @@ int main(int argc, char* argv[])
 
 
 			fileW << "Package " << j+1 << endl;
-			fileW << "Alpha: " << alpha << endl << "Resources types: -1" << endl << "Cores count: 1, 2, 4";
-			fileW << endl << "Computation amount: " << gflop << endl;
+			fileW << "Alpha: " << alpha << endl << "Resources types: -1" << endl << "Processors count: 1, 2, 4";
+			fileW << endl << "GFlop: " << gflop << endl;
+			fileW << "Transfer: ";
+			for (int i = 0; i < transfer.size(); i++){
+				fileW << "P" << transfer[i].first << " " << transfer[i].second << "Mb" << " ";
+			}
+			fileW << endl;
 			
 		}
 		fileW << "Connectivity matrix: " << endl;

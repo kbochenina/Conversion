@@ -57,18 +57,6 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		getline(f,s);
 		iss.str(s);
 		addErrorData = ", line 8";
-		while (!iss.eof()){
-			int x;
-			iss >> x;
-			if (iss.fail()) throw issFail + addErrorData;
-			coresCount.push_back(x);
-		}
-		
-		iss.clear();
-		getline(f,s);
-		getline(f,s);
-		iss.str(s);
-		addErrorData = ", line 10";
 		iss >> minBusyIntervals;
 		if (iss.fail()) throw issFail + addErrorData;
 		iss >> maxBusyIntervals;
@@ -78,7 +66,7 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		getline(f,s);
 		getline(f,s);
 		iss.str(s);
-		addErrorData = ", line 12";
+		addErrorData = ", line 10";
 		iss >> minPerf;
 		if (iss.fail()) throw issFail + addErrorData;
 		iss >> maxPerf;
@@ -88,7 +76,7 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		getline(f,s);
 		getline(f,s);
 		iss.str(s);
-		addErrorData = ", line 14";
+		addErrorData = ", line 12";
 		iss >> testCount;
 		if (iss.fail()) throw issFail + addErrorData;
 
@@ -96,7 +84,7 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		getline(f,s);
 		getline(f,s);
 		iss.str(s);
-		addErrorData = ", line 16";
+		addErrorData = ", line 14";
 		iss >> T;
 		if (iss.fail()) throw issFail + addErrorData;
 		
@@ -138,57 +126,51 @@ void ResourceGenerator::GenerateTestExamples(){
 				vector<int>::iterator resIt = resourceCount.begin();
 				// for all resource count
 				for (; resIt!=resourceCount.end(); resIt++){
-					vector <int>::iterator coreIt = coresCount.begin();
-					// for all cores count
-					for (; coreIt!=coresCount.end(); coreIt++){
-						// for all test examples
-						for (int i = 0; i < testCount; i++){
-							// filename: res_t[typesCount]_p[avaliablePart]_r[resourceCount]_c[coresCount]_[testCount]
-							string filename = "res_t";
-							int types = *typesIt, res = *resIt, cores = *coreIt;
-							float part = *partIt;
-							filename+=to_string((long long )types) + "_p" + to_string((long double)part) + "_r" +
-								to_string((long long )res) + "_c" + to_string((long long )cores) + "_" + to_string((long long )i);
-							ofstream f(filename);						
-							if (f.fail()) throw errCreate;
+					// for all test examples
+					for (int i = 0; i < testCount; i++){
+						// filename: res_c[clustersCount]_f[avaliablePart]_p[processorsPerClusterCount]_[testCount]
+						string filename = "res_t";
+						int types = *typesIt, res = *resIt;
+						float part = *partIt;
+						filename+=to_string((long long )types) + "_p" + to_string((long double)part) + "_r" +
+							to_string((long long )res) +  "_" + to_string((long long )i);
+						ofstream f(filename);						
+						if (f.fail()) throw errCreate;
 
-							f << "Resources count = " << res * types<< endl;
-							f << "Resources types count = " << types << endl;
-							for (int j = 0; j < types; j++){
-								f << "Type " << j+1 << " (" << res <<" resources, " << cores << " cores)" << endl;
-								f << "Performance (GFlops): " << rand()%maxPerf + minPerf << endl;
-								for (int k = 0; k < res; k++){
-									f << "Resource " << k+1 << endl;
-					
-									for (int k = 0; k < cores; k++){
-										int diap = rand()%maxBusyIntervals + minBusyIntervals;
-										f << "Core " << k+1 << " " << diap << endl;
-										int lengthDiap = 0; vector<pair<int,int>> diaps;
-										cout << (float)T*(1-part) << endl;
-										do{
-											int diapBegin = 0, diapEnd = 0;
-											lengthDiap = 0;
-											diaps.clear();
-											for (int l = 0; l < diap; l++){
-												if (diapBegin > T || diapEnd == T) continue;
-												diapBegin = diapEnd + rand()%(T-diapEnd);
-												diapEnd = diapBegin + rand()%(T-diapBegin);
-												if (diapEnd > T) diapEnd = T;
-												lengthDiap += diapEnd - diapBegin;
+						f << "Processors count = " << res * types<< endl;
+						f << "Clusters count = " << types << endl;
+						for (int j = 0; j < types; j++){
+							f << "Cluster " << j+1 << " (" << res <<" processors)" << endl;
+							f << "Performance (GFlops): " << rand()%maxPerf + minPerf << endl;
+							for (int k = 0; k < res; k++){
+								int diap = rand()%maxBusyIntervals + minBusyIntervals;
+								f << "Processor " << k+1 << " " << diap << endl;
+								int lengthDiap = 0; vector<pair<int,int>> diaps;
+								cout << (float)T*(1-part) << endl;
+								do{
+									int diapBegin = 0, diapEnd = 0;
+									lengthDiap = 0;
+									diaps.clear();
+									for (int l = 0; l < diap; l++){
+										if (diapBegin > T || diapEnd == T) continue;
+										diapBegin = diapEnd + rand()%(T-diapEnd);
+										diapEnd = diapBegin + rand()%(T-diapBegin);
+										if (diapEnd > T) diapEnd = T;
+										lengthDiap += diapEnd - diapBegin;
 												
-												diaps.push_back(make_pair(diapBegin, diapEnd));
-											}
-											
-										}
-										while (lengthDiap >(float)T*(1-part));
-										for (int l = 0; l < diap; l++)
-											f << diaps[l].first<< "  " << diaps[l].second << endl;
+										diaps.push_back(make_pair(diapBegin, diapEnd));
 									}
-								}// typeResCount
-							} // types
+											
+								}
+								while (lengthDiap >(float)T*(1-part));
+								for (int l = 0; l < diap; l++)
+									f << diaps[l].first<< "  " << diaps[l].second << endl;
+								
+							}// typeResCount
+						} // types
 
-						}
 					}
+					
 				}
 			}
 		}
