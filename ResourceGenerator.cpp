@@ -62,7 +62,7 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		iss >> maxBusyIntervals;
 		if (iss.fail()) throw issFail + addErrorData;
 		
-		iss.clear();
+		/*iss.clear();
 		getline(f,s);
 		getline(f,s);
 		iss.str(s);
@@ -70,7 +70,7 @@ ResourceGenerator::ResourceGenerator(char * filename)
 		iss >> minPerf;
 		if (iss.fail()) throw issFail + addErrorData;
 		iss >> maxPerf;
-		if (iss.fail()) throw issFail + addErrorData;
+		if (iss.fail()) throw issFail + addErrorData;*/
 
 		iss.clear();
 		getline(f,s);
@@ -138,12 +138,20 @@ void ResourceGenerator::GenerateTestExamples(){
 	string folderName = "resourcesTestExamples";
 	string mdErr = "Unable to create directory " + folderName;
 	string errCreate = "Error while creating file";
+	string chDirErr = "Unable to change directory to " + folderName;
+	string rmDirErr = "Unable to remove directory " + folderName;
 	try {
 		if (dirExist(folderName)) {
-			chdir(folderName.c_str());
+			int result = chdir(folderName.c_str());
+			if (result !=0 )
+				throw chDirErr;
 			system("del /q *");
-			chdir("..");
-			_rmdir(folderName.c_str());
+			result = chdir("..");
+			if (result !=0 )
+				throw chDirErr;
+			result = _rmdir(folderName.c_str());
+			if (result != 0 )
+				throw rmDirErr;
 		}
 		if( _mkdir( folderName.c_str() ) == 0 )
 		{
@@ -164,25 +172,25 @@ void ResourceGenerator::GenerateTestExamples(){
 				for (; resIt!=resourceCount.end(); resIt++){
 					// for all test examples
 					for (int i = 0; i < testCount; i++){
-						// filename: res_c[clustersCount]_f[avaliablePart]_p[processorsPerClusterCount]_[testCount]
+						// filename: res_c[typesCount]_f[avaliablePart]_p[processorsPerTypeCount]_[testCount]
 						string filename = "res_t";
 						int types = *typesIt, res = *resIt;
 						float part = *partIt;
 						filename+=to_string((long long )types) + "_p" + to_string((long double)part) + "_r" +
-							to_string((long long )res) +  "_" + to_string((long long )i);
+							to_string((long long )res) +  "_" + to_string((long long )i) + ".resfile";
 						ofstream f(filename);						
 						if (f.fail()) throw errCreate;
 
 						f << "Processors count = " << res * types<< endl;
-						f << "Clusters count = " << types << endl;
+						f << "Types count = " << types << endl;
 						for (int j = 0; j < types; j++){
-							f << "Cluster " << j+1 << " (" << res <<" processors)" << endl;
-							f << "Performance (GFlops): " << rand()%maxPerf + minPerf << endl;
+							f << "Type " << j+1 << " (" << res <<" processors)" << endl;
+							//f << "Performance (GFlops): " << rand()%maxPerf + minPerf << endl;
 							for (int k = 0; k < res; k++){
 								int diap = rand()%maxBusyIntervals + minBusyIntervals;
 								f << "Processor " << k+1 << " " << diap << endl;
 								int lengthDiap = 0; vector<pair<int,int>> diaps;
-								cout << (float)T*(1-part) << endl;
+								//cout << (float)T*(1-part) << endl;
 								do{
 									int diapBegin = 0, diapEnd = 0;
 									lengthDiap = 0;

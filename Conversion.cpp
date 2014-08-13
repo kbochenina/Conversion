@@ -20,7 +20,8 @@ int main(int argc, char* argv[])
 {
 	srand(time(NULL));
 	ResourceGenerator rg("resourceGeneratorInfo.txt");
-	rg.GenerateBandwidthFiles();
+	//rg.GenerateBandwidthFiles();
+	rg.GenerateTestExamples();
 	//rg.GenerateTestExamples();
 	//system("pause");
 	//int T = 43200;
